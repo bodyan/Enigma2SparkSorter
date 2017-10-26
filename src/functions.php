@@ -337,40 +337,39 @@ function createNewSparkFavList($spark_array, $favChannels, $folder) {
     if(!is_array($spark_array)) {
         die("Wrong array in createNewSparkFavList function!");
     }
-    $line_tv = '<?xml version="1.0"?>';
-    $line_tv .= '<favourites progdb_version="1.0.0">';
-        foreach ($favChannels as $name => $channels) {
-            if (count($channels) == 0) {
-                $line_tv .= '<fav name="'.$name.'" block="0" />';
-            } else {
-            $line_tv .= '<fav name="'.$name.'" block="0">';
-            foreach ($channels as $channel) {
-                foreach ($spark_array as $key => $spark) {
-                    if (mb_strstr($channel, $spark['link'])) {
-                        $line_tv .= '<prog service_key="'.$spark['service_key'].'" />';
-                    }
+    $ch_array = array();
+    //create array of fav channels, if fav not have channels, it will be not created
+    foreach ($favChannels as $name => $channels) {
+        foreach ($channels as $id =>$channel) {
+            foreach ($spark_array as $key => $spark) {
+                if (mb_strstr($channel, $spark['link'])) {
+                    $ch_array[$name][] = $spark['service_key'];
                 }
             }
-            $line_tv .= '</fav>';
-            }
         }
-        //must be 32 favorites
-        for ($i=count($favChannels); $i <= 32; $i++) {
-            $line_tv .= '<fav name="FAV'.$i.'" block="0" />';
-        }
-    $line_tv .= '</favourites>';
+    }
 
+    $line_tv = '<?xml version="1.0"?>';
+    $line_tv .= '<favourites progdb_version="1.0.0">';
     $line_radio = '<?xml version="1.0"?>';
     $line_radio .= '<favourites progdb_version="1.0.0">';
-        foreach ($favChannels as $name => $channels) {
-            $line_radio .= '<fav name="'.$name.'" block="0" />';
+    foreach ($ch_array as $name1 => $value1) {
+        $line_tv .= '<fav name="'.$name1.'" block="0">';
+        $line_radio .= '<fav name="'.$name1.'" block="0" />';
+        foreach ($value1 as $link) {
+            $line_tv .= '<prog service_key="'.$link.'" />';
         }
+        $line_tv .= '</fav>';
+    }
         //must be 32 favorites
-        for ($i=count($favChannels); $i <= 32; $i++) {
+        for ($i=count($ch_array)+1; $i <= 32; $i++) {
+            $line_tv .= '<fav name="FAV'.$i.'" block="0" />';
             $line_radio .= '<fav name="FAV'.$i.'" block="0" />';
+
         }
+    $line_tv .= '</favourites>';
     $line_radio .= '</favourites>';
-   //return $line;
+
     $newfile = $folder.'tv_fav.xml_new';
     $oldfile = $folder.'tv_fav.xml';
 
